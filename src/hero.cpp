@@ -48,7 +48,13 @@ void Hero::update() {
     m_y += clamp(m_vy, -3.5, 3.5);
     {
         float d = m_game.collision(box(), Axis::Y);
-        if (d == 0) m_airborne = true;
+        if (d == 0) {
+            if (!m_airborne) {
+                // walking down a clip reduces speed
+                m_vx *= 0.5;
+            }
+            m_airborne = true;
+        }
         else {
             m_y += d;
             m_vy = 0;
@@ -72,18 +78,26 @@ void Hero::draw() {
         { 16, 32, 16, 32 },
         { 48, 36, 16, 28 },
 
-        {  8, 105, 16, 32 },
-        { 40, 105, 16, 32 },
-        { 72, 105, 16, 32 },
-        { 40, 105, 16, 32 },
-        {  8, 105, 16, 32 },
+        {  0, 105, 32, 32 },
+        { 32, 105, 32, 32 },
+        { 64, 105, 32, 32 },
+        { 32, 105, 32, 32 },
+        {  0, 105, 32, 32 },
+
+        {  0, 137, 32, 32 },
+        { 32, 137, 32, 32 },
+        { 64, 137, 32, 32 },
+        { 32, 137, 32, 32 },
+        {  0, 137, 32, 32 },
     };
     int i = m_tick / 40 % 4;
     if (m_airborne) i = 4;
     if (m_type == Female) i += 5;
     if (m_type == Dwarf) i += 10;
+    if (m_type == Dwarf2) i += 15;
 
-    fx::draw_sprite(m_x - 8, m_y - 31, frames[i], m_dir < 0);
+    fx::Rect frame = frames[i];
+    fx::draw_sprite(m_x - frame.w / 2, m_y - 31, frame, m_dir < 0);
 
 //    fx::set_color(200, 200, 100, 100);
 //    Box b = box();

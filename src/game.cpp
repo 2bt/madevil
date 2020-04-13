@@ -149,4 +149,5 @@ void Game::key(int code) {
     if (code == 30) m_hero.m_type = Hero::Male;
     if (code == 31) m_hero.m_type = Hero::Female;
     if (code == 32) m_hero.m_type = Hero::Dwarf;
+    if (code == 33) m_hero.m_type = Hero::Dwarf2;
 }

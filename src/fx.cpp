@@ -100,7 +100,7 @@ int run(App& app) {
     s_window = SDL_CreateWindow("MADEVIL",
                                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 #ifdef __EMSCRIPTEN__
-                                WIDTH, HEIGHT, 0);
+                                WIDTH * 2, HEIGHT * 2, 0);
 #else
                                 WIDTH * 2, HEIGHT * 2, SDL_WINDOW_RESIZABLE);
 #endif

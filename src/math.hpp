@@ -2,6 +2,7 @@
 
 
 #include <cmath>
+#include <algorithm>
 
 
 inline float clamp(float x, float min, float max) {

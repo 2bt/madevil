@@ -10,7 +10,7 @@ class Game;
 class Hero {
 public:
     Hero(Game& game) : m_game(game) {}
-    enum Type { Male, Female, Dwarf };
+    enum Type { Male, Female, Dwarf, Dwarf2 };
 
     void init(float x, float y) {
         m_x        = x;
@@ -20,7 +20,7 @@ public:
         m_vy       = 0;
         m_airborne = true;
         m_tick     = 0;
-        m_type     = Dwarf;
+        m_type     = Dwarf2;
     }
     void update();
     void draw();
