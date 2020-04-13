@@ -30,6 +30,12 @@ void init_font() {
     }
     s_font_tex = SDL_CreateTexture(s_renderer, SDL_PIXELFORMAT_ARGB4444,
                                    SDL_TEXTUREACCESS_STATIC, 16 * 8, 6 * 8);
+    if (!s_font_tex) {
+        LOG_ERROR("cannot open font");
+        s_running = false;
+        s_result = 1;
+        return;
+    }
     SDL_UpdateTexture(s_font_tex, nullptr, data.data(), 2 * 16 * 8);
     SDL_SetTextureBlendMode(s_font_tex, SDL_BLENDMODE_BLEND);
 }
@@ -83,6 +89,9 @@ void exit(int res) {
 
 
 int run(App& app) {
+    s_running = true;
+    s_result = 0;
+
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
@@ -101,12 +110,19 @@ int run(App& app) {
 
 
     s_sprite_tex = IMG_LoadTexture(s_renderer, "assets/sprite.png");
-    
+    if (!s_sprite_tex) {
+        LOG_ERROR("cannot open sprite");
+        s_running = false;
+        s_result = 1;
+    }
+
     init_font();
 
-    if (app.init()) s_running = true;
-    else s_result = 1;
-
+    if (!app.init()) {
+        LOG_ERROR("app.init failed");
+        s_running = false;
+        s_result = 1;
+    }
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop_arg(loop, &app, -1, 1);

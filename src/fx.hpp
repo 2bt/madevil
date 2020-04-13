@@ -1,5 +1,13 @@
 #pragma once
 
+#include <cstdio>
+
+
+#define LOG_ERROR(fmt, ...) fprintf(stderr, "ERROR - " fmt "\n", ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)  fprintf(stderr, "WARN  - " fmt "\n", ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)  fprintf(stderr, "INFO  - " fmt "\n", ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) fprintf(stderr, "DEBUG - " fmt "\n", ##__VA_ARGS__)
+
 
 enum {
     WIDTH  = 384,
@@ -10,6 +18,7 @@ enum {
 namespace fx {
 
     struct App {
+        virtual ~App() {}
         virtual bool init() { return true; }
         virtual void free() {}
         virtual void key(int code) {}

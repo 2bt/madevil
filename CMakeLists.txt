@@ -8,6 +8,8 @@ add_compile_options(-std=c++17 -Wall -O3)
 add_executable(madevil
     src/main.cpp
     src/game.cpp
+    src/enemy.cpp
+    src/hero.cpp
     src/fx.cpp
     )
 
