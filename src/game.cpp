@@ -145,6 +145,8 @@ bool Game::check_sight(float x1, float y1, float x2, float y2) const {
 }
 
 void Game::key(int code) {
+//    printf("key %d\n", code);
     if (code == 30) m_hero.m_type = Hero::Male;
     if (code == 31) m_hero.m_type = Hero::Female;
+    if (code == 32) m_hero.m_type = Hero::Dwarf;
 }

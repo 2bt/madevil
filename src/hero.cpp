@@ -71,10 +71,17 @@ void Hero::draw() {
         { 32, 32, 16, 32 },
         { 16, 32, 16, 32 },
         { 48, 36, 16, 28 },
+
+        {  8, 105, 16, 32 },
+        { 40, 105, 16, 32 },
+        { 72, 105, 16, 32 },
+        { 40, 105, 16, 32 },
+        {  8, 105, 16, 32 },
     };
     int i = m_tick / 40 % 4;
     if (m_airborne) i = 4;
     if (m_type == Female) i += 5;
+    if (m_type == Dwarf) i += 10;
 
     fx::draw_sprite(m_x - 8, m_y - 31, frames[i], m_dir < 0);
 
