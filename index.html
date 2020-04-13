@@ -1,0 +1,39 @@
+<!doctypehtml>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+
+body {
+    background-color: #000;
+    width: 85%;
+    margin: auto;
+    padding-top: 1em;
+}
+#canvas {
+    width:100%;
+}
+
+    </style>
+</head>
+<body>
+    <script type="text/javascript">
+      var Module = {};
+      fetch("index.wasm")
+        .then(response =>
+          response.arrayBuffer()
+        ).then(buffer => {
+          Module.canvas = document.getElementById("canvas");
+          Module.wasmBinary = buffer;
+          var script = document.createElement("script");
+          script.src = "index.js";
+          script.onload = () => {
+            console.log("Emscripten boilerplate loaded.")
+          }
+          document.body.appendChild(script)
+        })
+    </script>
+    <canvas id="canvas"></canvas>
+</body>
+</html>
