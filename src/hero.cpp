@@ -10,55 +10,84 @@ Box Hero::box() const {
 
 void Hero::update() {
 
-    if (!m_airborne) {
-        int dx = fx::input().x;
+    enum {
+        RUN_UP = 20
+    };
+
+    int dx      = fx::input().x;
+    bool jump   = fx::input().a && !fx::input().prev_a;
+    bool attack = fx::input().b && !fx::input().prev_b;
+
+    // attack
+    if (!m_attacking && attack) {
+        m_attacking = true;
+        m_tick = 0;
+        m_run  = 0;
+    }
+    if (m_attacking) {
+        ++m_tick;
+        if (!m_airborne) {
+            m_vx = 0;
+            if (m_tick >= 10 && m_tick < 25) m_vx = m_dir * 0.5;
+        }
+        if (m_tick >= 30) {
+            m_attacking = false;
+            m_tick      = 0;
+        }
+    }
+
+    // walk
+    if (!m_attacking && !m_airborne) {
+
         if (dx == 0) {
-            m_tick = 7;
+            m_tick = 0;
+            m_run  = 0;
             m_vx   = 0;
         }
         else {
             if (m_dir != dx) {
-                m_dir = dx;
+                m_dir  = dx;
                 m_tick = 0;
+                m_run  = 0;
             }
-            float speed = m_tick < 60 ? 3 : 5;
+            ++m_run;
+            float speed = m_run < RUN_UP ? 3 : 5;
             m_tick += speed;
             m_vx = dx * speed * 0.25;
         }
     }
 
-
     m_x += m_vx;
-    {
-        float d = m_game.collision(box(), Axis::X);
-        m_x += d;
+    float f = m_game.collision(box(), Axis::X);
+    m_x += f;
+    if (f != 0) m_run = 0;
+
+    // jump
+    if (!m_attacking && !m_airborne && jump) {
+        m_airborne = true;
+        m_vy = -4.5;
     }
 
+    // gravity
+    m_vy += GRAVITY;
 
-    if (!m_airborne) {
-        if (fx::input().a && !fx::input().prev_a) {
-            m_airborne = true;
-            m_vy = -4.5;
+    m_y += clamp(m_vy, -MAX_VY, MAX_VY);
+    float d = m_game.collision(box(), Axis::Y);
+    if (d == 0) {
+        if (!m_airborne) {
+            // walking down a clip reduces speed
+            m_vx  = m_dir * 0.25;
+            m_run = 0;
         }
+        m_airborne = true;
     }
-
-    m_vy += 0.25;
-
-
-    m_y += clamp(m_vy, -3.5, 3.5);
-    {
-        float d = m_game.collision(box(), Axis::Y);
-        if (d == 0) {
-            if (!m_airborne) {
-                // walking down a clip reduces speed
-                m_vx *= 0.5;
-            }
-            m_airborne = true;
-        }
-        else {
-            m_y += d;
-            m_vy = 0;
-            if (d < 0) m_airborne = false;
+    else {
+        m_y += d;
+        m_vy = 0;
+        if (m_airborne && d < 0) {
+            m_airborne = false;
+            if (m_run < RUN_UP) m_run = 0;
+            if (m_attacking) m_vx = 0;
         }
     }
 }
@@ -78,23 +107,43 @@ void Hero::draw() {
         { 16, 32, 16, 32 },
         { 48, 36, 16, 28 },
 
-        {  0, 105, 32, 32 },
-        { 32, 105, 32, 32 },
-        { 64, 105, 32, 32 },
-        { 32, 105, 32, 32 },
-        {  0, 105, 32, 32 },
 
-        {  0, 137, 32, 32 },
-        { 32, 137, 32, 32 },
-        { 64, 137, 32, 32 },
-        { 32, 137, 32, 32 },
-        {  0, 137, 32, 32 },
+        // dwarf walk
+        { 48 * 0, 265, 48, 31 },
+        { 48 * 1, 265, 48, 31 },
+        { 48 * 2, 265, 48, 31 },
+        { 48 * 1, 265, 48, 31 },
+        // dwarf jump
+        { 48 * 0, 265, 48, 31 },
+        // dwarf attack
+        { 48 * 3, 265, 48, 31 },
+        { 48 * 4, 265, 48, 31 },
+        { 48 * 5, 265, 48, 31 },
+
+        // knight
+        { 32 * 0, 304, 32, 32 },
+        { 32 * 1, 304, 32, 32 },
+        { 32 * 2, 304, 32, 32 },
+        { 32 * 1, 304, 32, 32 },
+        { 32 * 0, 304, 32, 32 },
+        { 32 * 3, 304, 32, 32 },
+        { 32 * 4, 304, 32, 32 },
+        { 32 * 5, 304, 32, 32 },
     };
-    int i = m_tick / 40 % 4;
-    if (m_airborne) i = 4;
+
+    int i;
+    if (m_attacking) {
+        if (m_tick < 6) i = 5;
+        else if (m_tick < 13) i = 6;
+        else i = 7;
+    }
+    else if (m_airborne) i = 4;
+    else i = (m_tick + 30) / 40 % 4;
+
+
     if (m_type == Female) i += 5;
     if (m_type == Dwarf) i += 10;
-    if (m_type == Dwarf2) i += 15;
+    if (m_type == Knight) i += 18;
 
     fx::Rect frame = frames[i];
     fx::draw_sprite(m_x - frame.w / 2, m_y - 31, frame, m_dir < 0);

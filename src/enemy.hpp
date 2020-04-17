@@ -2,6 +2,7 @@
 
 
 #include <memory>
+#include "math.hpp"
 
 
 class Game;
@@ -17,6 +18,7 @@ public:
 
     virtual void update() = 0;
     virtual void draw() = 0;
+    virtual Box box() const = 0;
     bool is_alive() const { return m_alive; }
     bool can_see_hero() const;
 

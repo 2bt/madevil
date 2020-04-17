@@ -1,6 +1,6 @@
 #include "fx.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 #include <array>
 
 #ifdef __EMSCRIPTEN__
@@ -17,6 +17,7 @@ SDL_Window*   s_window;
 SDL_Renderer* s_renderer;
 SDL_Texture*  s_font_tex;
 SDL_Texture*  s_sprite_tex;
+SDL_Texture*  s_tile_tex;
 Input         s_input;
 bool          s_running;
 int           s_result;
@@ -69,14 +70,21 @@ void loop(void* arg) {
     s_input.x = !!ks[SDL_SCANCODE_RIGHT] - !!ks[SDL_SCANCODE_LEFT];
     s_input.y = !!ks[SDL_SCANCODE_DOWN] - !!ks[SDL_SCANCODE_UP];
     s_input.a = !!ks[SDL_SCANCODE_X];
-    s_input.b = !!ks[SDL_SCANCODE_Y] | !!ks[SDL_SCANCODE_Z];
+    s_input.b = !!ks[SDL_SCANCODE_C];
 
-    SDL_SetRenderDrawColor(s_renderer, 50, 50, 50, 0);
+    SDL_SetRenderDrawColor(s_renderer, 0, 0, 0, 0);
     SDL_RenderClear(s_renderer);
 
     app.update();
 
     SDL_RenderPresent(s_renderer);
+}
+
+
+SDL_Texture* load_tex(char const* name) {
+    SDL_Texture* tex = IMG_LoadTexture(s_renderer, name);
+    if (!tex) LOG_ERROR("cannot open %s", name);
+    return tex;
 }
 
 
@@ -109,9 +117,9 @@ int run(App& app) {
     SDL_RenderSetLogicalSize(s_renderer, WIDTH, HEIGHT);
 
 
-    s_sprite_tex = IMG_LoadTexture(s_renderer, "assets/sprite.png");
-    if (!s_sprite_tex) {
-        LOG_ERROR("cannot open sprite");
+    s_sprite_tex = load_tex("assets/sprite.png");
+    s_tile_tex   = load_tex("assets/tile.png");
+    if (!s_sprite_tex || !s_tile_tex) {
         s_running = false;
         s_result = 1;
     }
@@ -131,6 +139,7 @@ int run(App& app) {
 #endif
 
     app.free();
+    SDL_DestroyTexture(s_tile_tex);
     SDL_DestroyTexture(s_sprite_tex);
     SDL_DestroyTexture(s_font_tex);
     SDL_DestroyRenderer(s_renderer);
@@ -141,6 +150,17 @@ int run(App& app) {
 }
 
 Input const& input() { return s_input; }
+
+void draw_tile(int x, int y, int t) {
+    SDL_Rect src = {
+        t % 16 * TILE_SIZE,
+        t / 16 * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+    };
+    SDL_Rect dst = { x, y, TILE_SIZE, TILE_SIZE };
+    SDL_RenderCopy(s_renderer, s_tile_tex, &src, &dst);
+}
 
 void draw_sprite(int x, int y, Rect const& rect) {
     SDL_Rect src = { rect.x, rect.y, rect.w, rect.h };

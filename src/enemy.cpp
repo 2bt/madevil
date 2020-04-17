@@ -3,5 +3,6 @@
 
 
 bool Enemy::can_see_hero() const {
-    return m_game.can_see_hero(m_x, m_y - 8);
+    Box b = box();
+    return m_game.can_see_hero(b.x + b.w * 0.5, b.y + b.h * 0.5);
 }

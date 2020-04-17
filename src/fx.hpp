@@ -10,8 +10,9 @@
 
 
 enum {
-    WIDTH  = 384,
-    HEIGHT = 216,
+    WIDTH     = 384,
+    HEIGHT    = 216,
+    TILE_SIZE = 16,
 };
 
 
@@ -37,6 +38,7 @@ namespace fx {
         bool a, b, prev_a, prev_b;
     };
 
+    void draw_tile(int x, int y, int t);
     void draw_sprite(int x, int y, Rect const& rect);
     void draw_sprite(int x, int y, Rect const& rect, int flip, float ang = 0);
     void set_color(int r, int g, int b, int a = 255);

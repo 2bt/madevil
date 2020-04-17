@@ -8,12 +8,37 @@ public:
         : Enemy(game, x, y) {}
 
     void update() override {
-        printf("%d\n", can_see_hero());
+        ++m_tick;
+        if (m_tick == 0) m_dir = -m_dir;
+        if (m_tick > 20) m_x += m_dir * 0.5;
+
+        float f = m_game.collision(box(), Axis::X);
+        if (f != 0) {
+            m_x += f;
+            m_tick = -20;
+        }
+
+
+        if (m_tick > 0 && m_game.collision({m_x - 1 + m_dir * 10, m_y, 2, 2}, Axis::Y) == 0) {
+            m_tick = -20;
+        }
+
+        // gravity
+        m_vy += GRAVITY;
+
+        m_y += clamp(m_vy, -MAX_VY, MAX_VY);
+        float d = m_game.collision(box(), Axis::Y);
+        if (d != 0) {
+            m_y += d;
+            m_vy = 0;
+        }
+
     }
 
     void draw() override {
 //        fx::set_color(200, 200, 100, 100);
-//        fx::draw_rectangle(false, m_x - 6, m_y - 23, 12, 23);
+//        Box b = box();
+//        fx::draw_rectangle(false, b.x, b.y, b.w, b.h);
 
         static fx::Rect frames[] = {
             {  0, 72, 32, 32 },
@@ -21,36 +46,79 @@ public:
             { 64, 72, 32, 32 },
             { 32, 72, 32, 32 },
         };
-        fx::draw_sprite(m_x - 16, m_y - 32, frames[0], m_dir < 0);
+        int i = (m_tick + 100) / 16 % 4;
+        fx::draw_sprite(m_x - 16, m_y - 32, frames[i], m_dir < 0);
+    }
+
+    Box box() const override {
+        return { m_x - 10, m_y - 30, 20, 30 };
     }
 
 private:
-    int m_dir = -1;
+    int   m_dir  = -1;
+    int   m_tick = 0;
+    float m_vy   = 0;
 };
 
 
 bool Game::init() {
+    return load_map("assets/map.tmx");
+}
 
-    // load map
-    std::ifstream file("assets/map.txt");
-    if (!file) {
-        LOG_ERROR("cannot open map");
-        return false;
-    }
-    std::string line;
-    for (int row = 0; std::getline(file, line); ++row) {
-        m_tiles.push_back(line);
-        for (int col = 0; col < (int) line.size(); ++col) {
-            float x = col * TILE_SIZE + TILE_SIZE / 2;
-            float y = row * TILE_SIZE + TILE_SIZE;
-            switch (line[col]) {
-            case '@': m_hero.init(x, y); break;
-            case 'K': m_enemies.push_back(std::make_unique<Knight>(*this, x, y)); break;
-            default: break;
+
+bool Game::load_map(char const* name) {
+//    // load map
+//    std::ifstream file("assets/map.txt");
+//    if (!file) {
+//        LOG_ERROR("cannot open map");
+//        return false;
+//    }
+//    std::string line;
+//    for (int row = 0; std::getline(file, line); ++row) {
+//        m_tiles.push_back(line);
+//        for (int col = 0; col < (int) line.size(); ++col) {
+//            float x = col * TILE_SIZE + TILE_SIZE / 2;
+//            float y = row * TILE_SIZE + TILE_SIZE;
+//            switch (line[col]) {
+//            case '@': m_hero.init(x, y); break;
+//            case 'K': m_enemies.push_back(std::make_unique<Knight>(*this, x, y)); break;
+//            default: break;
+//            }
+//        }
+//    }
+
+    FILE* f = fopen(name, "r");
+    if (!f) return false;
+    std::array<char, 1024> line;
+    while (fgets(line.data(), line.size(), f)) {
+        std::array<char, 1024> name;
+        int x, y;
+        if (sscanf(line.data(), R"( <layer name="%[^"]")", name.data()) == 1 && std::string(name.data()) == "background") {
+            if (!fgets(line.data(), line.size(), f)) break; // skip line
+            while (fgets(line.data(), line.size(), f)) {
+                if (std::string(line.data()) == "</data>\n") break;
+                m_tiles.emplace_back();
+                auto& row = m_tiles.back();
+                char* p = line.data();
+                for (;;) {
+                    int t = std::strtol(p, &p, 10);
+                    row.push_back(t - 1);
+                    if (*p++ != ',') break;
+                }
             }
+        }
+        else if (sscanf(line.data(), R"( <object id="%*[^"]" name="%[^"]" x="%d" y="%d")", name.data(), &x, &y) == 3) {
+            x += TILE_SIZE / 2;
+            y += TILE_SIZE;
+            std::string type = name.data();
+//            printf("### object %s %d %d\n", name.data(), x, y);
+            if (type == "hero") m_hero.init(x, y);
+            if (type == "knight") m_enemies.push_back(std::make_unique<Knight>(*this, x, y));
         }
     }
 
+
+    fclose(f);
     return true;
 }
 
@@ -58,19 +126,26 @@ bool Game::init() {
 void Game::update() {
 
     m_hero.update();
-
+    for (auto it = m_enemies.begin(); it != m_enemies.end();) {
+        (*it)->update();
+        if (!(*it)->is_alive()) {
+            it = m_enemies.erase(it);
+            continue;
+        }
+        ++it;
+    }
 
     // draw
-    fx::set_color(68, 36, 52);
+//    fx::set_color(68, 36, 52);
+    fx::set_color(48, 52, 109);
     fx::draw_rectangle(true, 0, 0, WIDTH, HEIGHT);
 
 
     // map
     for (int y = 0; y < 14; ++y)
     for (int x = 0; x < 24; ++x) {
-        if (is_solid(tile_at(x, y))) {
-            fx::draw_sprite(x * TILE_SIZE, y * TILE_SIZE, { 0, 240, 16, 16 });
-        }
+        int t = tile_at(x, y);
+        if (t >= 0) fx::draw_tile(x * TILE_SIZE, y * TILE_SIZE, t);
     }
 
     m_hero.draw();
@@ -80,10 +155,10 @@ void Game::update() {
 }
 
 
-char Game::tile_at(int col, int row) const {
+int Game::tile_at(int col, int row) const {
     if (col < 0 || row < 0 ||
         row >= (int) m_tiles.size() ||
-        col >= (int) m_tiles[row].size()) return '0';
+        col >= (int) m_tiles[row].size()) return 0;
     return m_tiles[row][col];
 }
 
@@ -101,7 +176,7 @@ float Game::collision(Box const& box, Axis axis) const {
     for (int y = y1; y <= y2; ++y)
     for (int x = x1; x <= x2; ++x) {
 
-        char t = tile_at(x, y);
+        int t = tile_at(x, y);
         if (is_solid(t)) {
 
             tile_box.x = x * TILE_SIZE;
@@ -149,5 +224,5 @@ void Game::key(int code) {
     if (code == 30) m_hero.m_type = Hero::Male;
     if (code == 31) m_hero.m_type = Hero::Female;
     if (code == 32) m_hero.m_type = Hero::Dwarf;
-    if (code == 33) m_hero.m_type = Hero::Dwarf2;
+    if (code == 33) m_hero.m_type = Hero::Knight;
 }
