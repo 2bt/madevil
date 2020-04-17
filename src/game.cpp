@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include <fstream>
+#include <array>
 
 
 class Knight : public Enemy {
@@ -67,28 +68,11 @@ bool Game::init() {
 
 
 bool Game::load_map(char const* name) {
-//    // load map
-//    std::ifstream file("assets/map.txt");
-//    if (!file) {
-//        LOG_ERROR("cannot open map");
-//        return false;
-//    }
-//    std::string line;
-//    for (int row = 0; std::getline(file, line); ++row) {
-//        m_tiles.push_back(line);
-//        for (int col = 0; col < (int) line.size(); ++col) {
-//            float x = col * TILE_SIZE + TILE_SIZE / 2;
-//            float y = row * TILE_SIZE + TILE_SIZE;
-//            switch (line[col]) {
-//            case '@': m_hero.init(x, y); break;
-//            case 'K': m_enemies.push_back(std::make_unique<Knight>(*this, x, y)); break;
-//            default: break;
-//            }
-//        }
-//    }
-
     FILE* f = fopen(name, "r");
-    if (!f) return false;
+    if (!f) {
+        LOG_ERROR("cannot open map");
+        return false;
+    }
     std::array<char, 1024> line;
     while (fgets(line.data(), line.size(), f)) {
         std::array<char, 1024> name;
@@ -111,7 +95,7 @@ bool Game::load_map(char const* name) {
             x += TILE_SIZE / 2;
             y += TILE_SIZE;
             std::string type = name.data();
-//            printf("### object %s %d %d\n", name.data(), x, y);
+            //printf("### object %s %d %d\n", name.data(), x, y);
             if (type == "hero") m_hero.init(x, y);
             if (type == "knight") m_enemies.push_back(std::make_unique<Knight>(*this, x, y));
         }
@@ -136,7 +120,6 @@ void Game::update() {
     }
 
     // draw
-//    fx::set_color(68, 36, 52);
     fx::set_color(48, 52, 109);
     fx::draw_rectangle(true, 0, 0, WIDTH, HEIGHT);
 

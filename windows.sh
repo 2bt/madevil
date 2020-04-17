@@ -24,4 +24,4 @@ cp /home/dlangner/stuff/SDL-windows/SDL2_image-2.0.5/x86_64-w64-mingw32/bin/zlib
 
 zip -r win.zip win
 rsync -aviz win.zip twobit@chaossource.net:~/www/madevil/
-rm win.zip
+rm -r win.zip win

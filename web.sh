@@ -15,4 +15,4 @@ emcc \
 
 rsync -aviz index.html index.js index.wasm twobit@chaossource.net:~/www/madevil/
 
-rm index.html index.js index.wasm
+rm index.js index.wasm
