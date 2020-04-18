@@ -146,7 +146,9 @@ void Hero::draw() {
     if (m_type == Knight) i += 18;
 
     fx::Rect frame = frames[i];
-    fx::draw_sprite(m_x - frame.w / 2, m_y - 31, frame, m_dir < 0);
+    fx::draw_sprite(m_x - frame.w / 2 - m_game.camera().x,
+                    m_y - 31 - m_game.camera().y,
+                    frame, m_dir < 0);
 
 //    fx::set_color(200, 200, 100, 100);
 //    Box b = box();

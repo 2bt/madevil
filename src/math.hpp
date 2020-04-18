@@ -19,19 +19,19 @@ enum class Axis { X, Y };
 
 struct Box {
     float x, y, w, h;
-    float overlap(Box const& rhs, Axis axis) const {
-        if (x >= rhs.x + rhs.w ||
-            y >= rhs.y + rhs.h ||
-            x + w <= rhs.x ||
-            y + h <= rhs.y) return 0;
+    float overlap(Box const& b, Axis axis) const {
+        if (x >= b.x + b.w ||
+            y >= b.y + b.h ||
+            x + w <= b.x ||
+            y + h <= b.y) return 0;
         float s, t;
         if (axis == Axis::X) {
-            s = rhs.x + rhs.w - x;
-            t = rhs.x - w - x;
+            s = b.x + b.w - x;
+            t = b.x - w - x;
         }
         else {
-            s = rhs.y + rhs.h - y;
-            t = rhs.y - h - y;
+            s = b.y + b.h - y;
+            t = b.y - h - y;
         }
         return std::abs(s) < std::abs(t) ? s : t;
     }

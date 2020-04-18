@@ -33,10 +33,15 @@ public:
         return check_sight(x, y, b.x + b.w * 0.5, b.y + b.h * 0.5);
     }
 
+    Box const& camera() const { return m_camera; }
 private:
     bool load_map(char const* name);
+    bool update_camera();
 
     std::vector<std::vector<int>> m_tiles;
+    std::vector<Box>              m_camera_barriers;
+
     std::vector<Enemy::Ptr>       m_enemies;
     Hero                          m_hero = { *this };
+    Box                           m_camera = { 0, 0, WIDTH, HEIGHT };
 };

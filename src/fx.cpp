@@ -151,26 +151,26 @@ int run(App& app) {
 
 Input const& input() { return s_input; }
 
-void draw_tile(int x, int y, int t) {
+void draw_tile(float x, float y, int t) {
     SDL_Rect src = {
         t % 16 * TILE_SIZE,
         t / 16 * TILE_SIZE,
         TILE_SIZE,
         TILE_SIZE
     };
-    SDL_Rect dst = { x, y, TILE_SIZE, TILE_SIZE };
+    SDL_Rect dst = { std::floor(x), std::floor(y), TILE_SIZE, TILE_SIZE };
     SDL_RenderCopy(s_renderer, s_tile_tex, &src, &dst);
 }
 
-void draw_sprite(int x, int y, Rect const& rect) {
+void draw_sprite(float x, float y, Rect const& rect) {
     SDL_Rect src = { rect.x, rect.y, rect.w, rect.h };
-    SDL_Rect dst = { x, y, rect.w, rect.h };
+    SDL_Rect dst = { std::floor(x), std::floor(y), rect.w, rect.h };
     SDL_RenderCopy(s_renderer, s_sprite_tex, &src, &dst);
 }
 
-void draw_sprite(int x, int y, Rect const& rect, int flip, float ang) {
+void draw_sprite(float x, float y, Rect const& rect, int flip, float ang) {
     SDL_Rect src = { rect.x, rect.y, rect.w, rect.h };
-    SDL_Rect dst = { x, y, rect.w, rect.h };
+    SDL_Rect dst = { std::floor(x), std::floor(y), rect.w, rect.h };
     SDL_RenderCopyEx(s_renderer, s_sprite_tex, &src, &dst, ang, nullptr, (SDL_RendererFlip) flip);
 }
 
@@ -178,12 +178,12 @@ void set_color(int r, int g, int b, int a) {
     SDL_SetRenderDrawColor(s_renderer, r, g, b, a);
 }
 
-void draw_line(int x1, int y1, int x2, int y2) {
-    SDL_RenderDrawLine(s_renderer, x1, y1, x2, y2);
+void draw_line(float x1, float y1, float x2, float y2) {
+    SDL_RenderDrawLine(s_renderer, std::floor(x1), std::floor(y1), std::floor(x2), std::floor(y2));
 }
 
-void draw_rectangle(bool fill, int x, int y, int w, int h) {
-    SDL_Rect r = { x, y, w, h };
+void draw_rectangle(bool fill, Rect const& rect) {
+    SDL_Rect r = { rect.x, rect.y, rect.w, rect.h };
     if (fill) SDL_RenderFillRect(s_renderer, &r);
     else      SDL_RenderDrawRect(s_renderer, &r);
 }
@@ -192,14 +192,14 @@ void set_font_color(int r, int g, int b) {
     SDL_SetTextureColorMod(s_font_tex, r, g, b);
 }
 
-void put_char(int x, int y, char c) {
+void put_char(float x, float y, char c) {
     if (c < 32) return;
     SDL_Rect src = { c % 16 * 8, (c - 32) / 16 * 8, 8, 8 };
-    SDL_Rect dst = { x, y, 8, 8 };
+    SDL_Rect dst = { std::floor(x), std::floor(y), 8, 8 };
     SDL_RenderCopy(s_renderer, s_font_tex, &src, &dst);
 }
 
-void print(int x, int y, const char* str) {
+void print(float x, float y, const char* str) {
     while (*str) {
         put_char(x, y, *str);
         ++str;
@@ -207,7 +207,7 @@ void print(int x, int y, const char* str) {
     }
 }
 
-void printf(int x, int y, const char* format, ...) {
+void printf(float x, float y, const char* format, ...) {
     va_list args;
     va_start(args, format);
     static std::array<char, 1024> line;

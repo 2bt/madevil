@@ -48,7 +48,9 @@ public:
             { 32, 72, 32, 32 },
         };
         int i = (m_tick + 100) / 16 % 4;
-        fx::draw_sprite(m_x - 16, m_y - 32, frames[i], m_dir < 0);
+        fx::draw_sprite(m_x - 16 - m_game.camera().x,
+                        m_y - 32 - m_game.camera().y,
+                        frames[i], m_dir < 0);
     }
 
     Box box() const override {
@@ -66,7 +68,6 @@ bool Game::init() {
     return load_map("assets/map.tmx");
 }
 
-
 bool Game::load_map(char const* name) {
     FILE* f = fopen(name, "r");
     if (!f) {
@@ -75,41 +76,92 @@ bool Game::load_map(char const* name) {
     }
     std::array<char, 1024> line;
     while (fgets(line.data(), line.size(), f)) {
-        std::array<char, 1024> name;
-        int x, y;
-        if (sscanf(line.data(), R"( <layer name="%[^"]")", name.data()) == 1 && std::string(name.data()) == "background") {
+        std::array<char, 1024> buf;
+        float x, y, w, h;
+        if (sscanf(line.data(), R"( <layer name="%[^"]")", buf.data()) == 1 &&
+            std::string(buf.data()) == "background")
+        {
             if (!fgets(line.data(), line.size(), f)) break; // skip line
             while (fgets(line.data(), line.size(), f)) {
                 if (std::string(line.data()) == "</data>\n") break;
                 m_tiles.emplace_back();
                 auto& row = m_tiles.back();
                 char* p = line.data();
-                for (;;) {
+                while (*p && *p != '\n') {
                     int t = std::strtol(p, &p, 10);
                     row.push_back(t - 1);
-                    if (*p++ != ',') break;
+                    if (*p) p++;
                 }
             }
+            continue;
         }
-        else if (sscanf(line.data(), R"( <object id="%*[^"]" name="%[^"]" x="%d" y="%d")", name.data(), &x, &y) == 3) {
-            x += TILE_SIZE / 2;
-            y += TILE_SIZE;
-            std::string type = name.data();
-            //printf("### object %s %d %d\n", name.data(), x, y);
-            if (type == "hero") m_hero.init(x, y);
-            if (type == "knight") m_enemies.push_back(std::make_unique<Knight>(*this, x, y));
+        if (sscanf(line.data(), R"( <object id="%*[^"]" name="%[^"]" x="%f" y="%f" width="%f" height="%f")", buf.data(), &x, &y, &w, &h) == 5) {
+            std::string name = buf.data();
+            if (name == "camera-barrier") {
+                m_camera_barriers.push_back({ x, y, w, h });
+                continue;
+            }
+
+            x += w / 2;
+            y += h;
+            if (name == "hero") m_hero.init(x, y);
+            if (name == "knight") m_enemies.push_back(std::make_unique<Knight>(*this, x, y));
+            continue;
+        }
+    }
+    fclose(f);
+
+
+    // move camera to hero
+    Box hb = m_hero.box();
+    m_camera.x = hb.x + hb.w * 0.5 - m_camera.w * 0.5;
+    m_camera.y = hb.y - m_camera.h * 0.5;
+    for (int i = 0; i < 100; ++i) {
+        if (!update_camera()) break;
+    }
+
+    return true;
+}
+
+
+bool Game::update_camera() {
+    Box hb = m_hero.box();
+    Box cb = m_camera;
+    m_camera.x = hb.x + hb.w * 0.5 - m_camera.w * 0.5;
+    if (!m_hero.is_airborne() || hb.y > cb.y + cb.h * 0.6) {
+        m_camera.y = hb.y - m_camera.h * 0.5;
+    }
+    bool auto_move = false;
+    for (Box const& b : m_camera_barriers) {
+        if (b.w > b.h) {
+            float d = m_camera.overlap(b, Axis::Y);
+            m_camera.y += d;
+            if (d != 0) auto_move = true;
+        }
+        else {
+            float d = m_camera.overlap(b, Axis::X);
+            m_camera.x += d;
+            if (d != 0) auto_move = true;
         }
     }
 
+    float speed = 1;
+    m_camera.y = clamp(m_camera.y, cb.y - speed, cb.y + speed);
+    m_camera.x = clamp(m_camera.x, cb.x - speed, cb.x + speed);
 
-    fclose(f);
-    return true;
+    return auto_move;
 }
 
 
 void Game::update() {
 
+    // update hero
     m_hero.update();
+
+    // update camera
+    update_camera();
+
+    // update enemies
     for (auto it = m_enemies.begin(); it != m_enemies.end();) {
         (*it)->update();
         if (!(*it)->is_alive()) {
@@ -119,16 +171,21 @@ void Game::update() {
         ++it;
     }
 
-    // draw
+///////////////////////////////// draw /////////////////////////////////
+
     fx::set_color(48, 52, 109);
-    fx::draw_rectangle(true, 0, 0, WIDTH, HEIGHT);
+    fx::draw_rectangle(true, { 0, 0, WIDTH, HEIGHT });
 
-
-    // map
-    for (int y = 0; y < 14; ++y)
-    for (int x = 0; x < 24; ++x) {
-        int t = tile_at(x, y);
-        if (t >= 0) fx::draw_tile(x * TILE_SIZE, y * TILE_SIZE, t);
+    {
+        int x1 = std::floor(m_camera.x / TILE_SIZE);
+        int x2 = std::floor((m_camera.x + m_camera.w + TILE_SIZE) / TILE_SIZE);
+        int y1 = std::floor(m_camera.y / TILE_SIZE);
+        int y2 = std::floor((m_camera.y + m_camera.h + TILE_SIZE) / TILE_SIZE);
+        for (int y = y1; y <= y2; ++y)
+        for (int x = x1; x <= x2; ++x) {
+            int t = tile_at(x, y);
+            if (t >= 0) fx::draw_tile(x * TILE_SIZE - m_camera.x, y * TILE_SIZE - m_camera.y, t);
+        }
     }
 
     m_hero.draw();

@@ -26,6 +26,7 @@ public:
     }
     void update();
     void draw();
+    bool is_airborne() const { return m_airborne; }
 
     Box box() const;
 
