@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <array>
+#include <cmath>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -158,19 +159,19 @@ void draw_tile(float x, float y, int t) {
         TILE_SIZE,
         TILE_SIZE
     };
-    SDL_Rect dst = { std::floor(x), std::floor(y), TILE_SIZE, TILE_SIZE };
+    SDL_Rect dst = { (int) std::floor(x), (int) std::floor(y), TILE_SIZE, TILE_SIZE };
     SDL_RenderCopy(s_renderer, s_tile_tex, &src, &dst);
 }
 
 void draw_sprite(float x, float y, Rect const& rect) {
     SDL_Rect src = { rect.x, rect.y, rect.w, rect.h };
-    SDL_Rect dst = { std::floor(x), std::floor(y), rect.w, rect.h };
+    SDL_Rect dst = { (int) std::floor(x), (int) std::floor(y), rect.w, rect.h };
     SDL_RenderCopy(s_renderer, s_sprite_tex, &src, &dst);
 }
 
 void draw_sprite(float x, float y, Rect const& rect, int flip, float ang) {
     SDL_Rect src = { rect.x, rect.y, rect.w, rect.h };
-    SDL_Rect dst = { std::floor(x), std::floor(y), rect.w, rect.h };
+    SDL_Rect dst = { (int) std::floor(x), (int) std::floor(y), rect.w, rect.h };
     SDL_RenderCopyEx(s_renderer, s_sprite_tex, &src, &dst, ang, nullptr, (SDL_RendererFlip) flip);
 }
 
@@ -179,7 +180,7 @@ void set_color(int r, int g, int b, int a) {
 }
 
 void draw_line(float x1, float y1, float x2, float y2) {
-    SDL_RenderDrawLine(s_renderer, std::floor(x1), std::floor(y1), std::floor(x2), std::floor(y2));
+    SDL_RenderDrawLine(s_renderer, (int) std::floor(x1), (int) std::floor(y1), (int) std::floor(x2), (int) std::floor(y2));
 }
 
 void draw_rectangle(bool fill, Rect const& rect) {
@@ -195,7 +196,7 @@ void set_font_color(int r, int g, int b) {
 void put_char(float x, float y, char c) {
     if (c < 32) return;
     SDL_Rect src = { c % 16 * 8, (c - 32) / 16 * 8, 8, 8 };
-    SDL_Rect dst = { std::floor(x), std::floor(y), 8, 8 };
+    SDL_Rect dst = { (int) std::floor(x), (int) std::floor(y), 8, 8 };
     SDL_RenderCopy(s_renderer, s_font_tex, &src, &dst);
 }
 
