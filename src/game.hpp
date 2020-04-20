@@ -34,7 +34,7 @@ public:
     }
 
     Box const& camera() const { return m_camera; }
-//    std::vector<Enemy::Ptr> const& enemies() { return m_enemies; }
+    std::vector<Enemy::Ptr> const& enemies() { return m_enemies; }
 
     void draw_debug_box(Box const& b) {
         if (!m_debug) return;

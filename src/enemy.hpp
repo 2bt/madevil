@@ -19,6 +19,7 @@ public:
     virtual void update() = 0;
     virtual void draw() = 0;
     virtual Box box() const = 0;
+    virtual void hit(int dir) {}
     bool is_alive() const { return m_alive; }
     bool can_see_hero() const;
 

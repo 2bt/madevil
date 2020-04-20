@@ -9,19 +9,29 @@ public:
         : Enemy(game, x, y) {}
 
     void update() override {
-        ++m_tick;
-        if (m_tick == 0) m_dir = -m_dir;
-        if (m_tick > 20) m_x += m_dir * 0.5;
+
+        if (!m_airborne) {
+            ++m_tick;
+            if (m_tick == 0) m_dir = -m_dir;
+            if (m_tick > 20) m_vx = m_dir * 0.5;
+        }
+
+        m_x += m_vx;
 
         float f = m_game.collision(box(), Axis::X);
         if (f != 0) {
             m_x += f;
+            m_vx = 0;
             m_tick = -20;
         }
 
 
-        if (m_tick > 0 && m_game.collision({m_x - 1 + m_dir * 11, m_y, 2, 2}, Axis::Y) == 0) {
-            m_tick = -20;
+        if (!m_airborne) {
+            // test for cliff edge
+            if (m_tick > 0 && m_game.collision({ m_x - 1 + m_dir * 11, m_y, 2, 2 }, Axis::Y) == 0) {
+                m_vx = 0;
+                m_tick = -20;
+            }
         }
 
         // gravity
@@ -29,11 +39,25 @@ public:
 
         m_y += clamp(m_vy, -MAX_VY, MAX_VY);
         float d = m_game.collision(box(), Axis::Y);
-        if (d != 0) {
+        if (d == 0) {
+            m_airborne = true;
+        }
+        else {
             m_y += d;
             m_vy = 0;
+            if (m_airborne && d < 0) {
+                m_airborne = false;
+                m_vx = 0;
+                m_tick = 0;
+            }
         }
 
+    }
+    void hit(int dir) override {
+        if (m_airborne) return;
+        m_vy = -2.5;
+        m_vx = dir * 1.5;
+        m_airborne = true;
     }
 
     void draw() override {
@@ -47,6 +71,7 @@ public:
             { 32, 72, 32, 32 },
         };
         int i = (m_tick + 100) / 16 % 4;
+        if (m_airborne) i = 0;
         fx::draw_sprite(m_x - 16 - m_game.camera().x,
                         m_y - 32 - m_game.camera().y,
                         frames[i], m_dir < 0);
@@ -60,6 +85,8 @@ private:
     int   m_dir  = -1;
     int   m_tick = 0;
     float m_vy   = 0;
+    float m_vx   = 0;
+    bool  m_airborne = true;
 };
 
 

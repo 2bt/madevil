@@ -36,7 +36,14 @@ void Hero::update() {
             m_vx = 0;
             if (m_tick >= 10 && m_tick < 25) {
                 m_vx = m_dir * 0.5;
-                // TODO: actually attack...
+            }
+        }
+
+        if (m_tick >= 14) {
+            // actually attack
+            Box b = attack_box();
+            for (Enemy::Ptr const& e : m_game.enemies()) {
+                if (b.overlap(e->box(), Axis::X) != 0) e->hit(m_dir);
             }
         }
         if (m_tick >= 30) {
@@ -84,11 +91,11 @@ void Hero::update() {
     float d = m_game.collision(box(), Axis::Y);
     if (d == 0) {
         if (!m_airborne) {
+            m_airborne = true;
             // walking down a clip reduces speed
             m_vx  = m_dir * 0.25;
             m_run = 0;
         }
-        m_airborne = true;
     }
     else {
         m_y += d;
