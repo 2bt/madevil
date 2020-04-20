@@ -20,7 +20,7 @@ public:
         }
 
 
-        if (m_tick > 0 && m_game.collision({m_x - 1 + m_dir * 10, m_y, 2, 2}, Axis::Y) == 0) {
+        if (m_tick > 0 && m_game.collision({m_x - 1 + m_dir * 11, m_y, 2, 2}, Axis::Y) == 0) {
             m_tick = -20;
         }
 
@@ -37,9 +37,8 @@ public:
     }
 
     void draw() override {
-//        fx::set_color(200, 200, 100, 100);
-//        Box b = box();
-//        fx::draw_rectangle(false, b.x, b.y, b.w, b.h);
+        fx::set_color(200, 200, 100, 100);
+        m_game.draw_debug_box(box());
 
         static fx::Rect frames[] = {
             {  0, 72, 32, 32 },
@@ -69,6 +68,9 @@ bool Game::init() {
 }
 
 bool Game::load_map(char const* name) {
+    m_enemies.clear();
+    m_tiles.clear();
+
     FILE* f = fopen(name, "r");
     if (!f) {
         LOG_ERROR("cannot open map");
@@ -110,7 +112,6 @@ bool Game::load_map(char const* name) {
         }
     }
     fclose(f);
-
 
     // move camera to hero
     Box hb = m_hero.box();
@@ -265,4 +266,7 @@ void Game::key(int code) {
     if (code == 31) m_hero.m_type = Hero::Female;
     if (code == 32) m_hero.m_type = Hero::Dwarf;
     if (code == 33) m_hero.m_type = Hero::Knight;
+
+    // TAB
+    if (code == 43) m_debug = !m_debug;
 }

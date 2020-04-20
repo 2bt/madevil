@@ -22,7 +22,7 @@ public:
         m_attacking = false;
         m_tick      = 0;
         m_run       = 0;
-        m_type      = Knight;
+        m_type      = Dwarf;
     }
     void update();
     void draw();
@@ -32,6 +32,7 @@ public:
 
     Type  m_type;
 private:
+    Box attack_box() const;
 
     Game& m_game;
     float m_x;

@@ -46,6 +46,7 @@ namespace fx {
     void set_color(int r, int g, int b, int a = 255);
     void draw_line(float x1, float y1, float x2, float y2);
     void draw_rectangle(bool fill, Rect const& rect);
+    void draw_rectangle(bool fill, float x, float y, float w, float h);
     void set_font_color(int r, int g, int b);
     void put_char(float x, float y, char c);
     void print(float x, float y, const char* str);

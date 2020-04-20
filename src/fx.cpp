@@ -188,6 +188,9 @@ void draw_rectangle(bool fill, Rect const& rect) {
     if (fill) SDL_RenderFillRect(s_renderer, &r);
     else      SDL_RenderDrawRect(s_renderer, &r);
 }
+void draw_rectangle(bool fill, float x, float y, float w, float h) {
+    draw_rectangle(fill, { (int) std::floor(x), (int) std::floor(y), (int) std::floor(w), (int) std::floor(h) });
+}
 
 void set_font_color(int r, int g, int b) {
     SDL_SetTextureColorMod(s_font_tex, r, g, b);
